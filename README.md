@@ -91,7 +91,7 @@ gradle build
 
 ## 📄 Лицензия
 
-Проект распространяется по лицензии **MIT**. Подробности в файле [LICENSE](LICENSE).
+Проект распространяется по лицензии **GNU General Public License v3.0**. Подробности в файле [LICENSE](LICENSE).
 
 <div align="center">
 
