@@ -38,7 +38,7 @@ public class HitboxCamMod {
      * Открывает экран. В 26.3 метод setScreen переехал из Minecraft в Minecraft.gui,
      * поэтому ищем его через рефлексию — так сборка не зависит от точного места метода.
      */
-    static void openScreen(Minecraft mc, Screen screen) {
+    public static void openScreen(Minecraft mc, Screen screen) {
         try {
             Object target = mc;
             Method m = findSetScreen(mc.getClass());

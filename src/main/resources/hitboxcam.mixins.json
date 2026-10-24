@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "CameraMixin",
-    "PlayerMixin"
+    "PlayerMixin",
+    "PauseScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 0

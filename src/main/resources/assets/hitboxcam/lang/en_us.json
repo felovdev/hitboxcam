@@ -3,6 +3,7 @@
   "screen.hitboxcam.title": "Hitbox & Camera",
   "screen.hitboxcam.hitbox": "Hitbox",
   "screen.hitboxcam.camera": "Camera",
+  "screen.hitboxcam.open_button": "Hitbox & Camera",
   "screen.hitboxcam.reset": "Reset",
   "slider.hitboxcam.width": "Width: %s",
   "slider.hitboxcam.height": "Height: %s",

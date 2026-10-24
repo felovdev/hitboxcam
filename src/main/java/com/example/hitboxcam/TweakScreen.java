@@ -22,9 +22,16 @@ public class TweakScreen extends Screen {
     private static final int SLIDER_H = 20;
 
     private final List<ValueSlider> sliders = new ArrayList<>();
+    /** Экран, на который вернуться при закрытии (меню паузы), либо null. */
+    private final Screen parent;
 
     public TweakScreen() {
+        this(null);
+    }
+
+    public TweakScreen(Screen parent) {
         super(Component.translatable("screen.hitboxcam.title"));
+        this.parent = parent;
     }
 
     @Override
@@ -81,7 +88,11 @@ public class TweakScreen extends Screen {
     @Override
     public void onClose() {
         TweakState.save();
-        super.onClose();
+        if (parent != null) {
+            HitboxCamMod.openScreen(Minecraft.getInstance(), parent);
+        } else {
+            super.onClose();
+        }
     }
 
     @Override
