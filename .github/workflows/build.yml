@@ -4,6 +4,11 @@ on:
     branches: ['**']
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Тег релиза (например v1.0.1). Оставь пустым, чтобы только собрать.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -25,9 +30,18 @@ jobs:
         with:
           name: hitboxcam-jar
           path: build/libs/*.jar
-      - name: Publish release
+      - name: Publish release (по тегу)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          files: build/libs/*.jar
+          generate_release_notes: true
+      - name: Publish release (ручной запуск)
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: Hitbox & Camera Tweaker ${{ inputs.release_tag }}
           files: build/libs/*.jar
           generate_release_notes: true
