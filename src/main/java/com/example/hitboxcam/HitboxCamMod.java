@@ -1,11 +1,11 @@
 package com.example.hitboxcam;
 
-import org.lwjgl.glfw.GLFW;
-
-import com.mojang.blaze3d.platform.InputConstants;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -18,6 +18,10 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 public class HitboxCamMod {
     public static final String MOD_ID = "hitboxcam";
 
+    // В 26.3 ввод идёт через SDL: код клавиши = SDL keycode, для буквы это её ASCII-код в нижнем регистре.
+    // 'h' = 104. Клавишу всё равно можно поменять в Настройки -> Управление.
+    private static final int KEY_H = 104;
+
     public static KeyMapping OPEN_MENU;
 
     public HitboxCamMod(IEventBus modBus) {
@@ -26,10 +30,40 @@ public class HitboxCamMod {
     }
 
     private static void registerKeys(RegisterKeyMappingsEvent event) {
-        // Категория задаётся строкой-ключом перевода; см. lang/ru_ru.json и en_us.json
-        OPEN_MENU = new KeyMapping("key.hitboxcam.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H,
-                KeyMapping.Category.MISC);
+        OPEN_MENU = new KeyMapping("key.hitboxcam.open", KEY_H, KeyMapping.Category.MISC);
         event.register(OPEN_MENU);
+    }
+
+    /**
+     * Открывает экран. В 26.3 метод setScreen переехал из Minecraft в Minecraft.gui,
+     * поэтому ищем его через рефлексию — так сборка не зависит от точного места метода.
+     */
+    static void openScreen(Minecraft mc, Screen screen) {
+        try {
+            Object target = mc;
+            Method m = findSetScreen(mc.getClass());
+            if (m == null) {
+                Field f = mc.getClass().getField("gui");
+                target = f.get(mc);
+                m = findSetScreen(target.getClass());
+            }
+            if (m != null) {
+                m.setAccessible(true);
+                m.invoke(target, screen);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    private static Method findSetScreen(Class<?> c) {
+        for (Method m : c.getMethods()) {
+            if (m.getName().equals("setScreen") && m.getParameterCount() == 1
+                    && m.getParameterTypes()[0].isAssignableFrom(Screen.class)) {
+                return m;
+            }
+        }
+        return null;
     }
 
     @EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT)
@@ -39,7 +73,7 @@ public class HitboxCamMod {
             Minecraft mc = Minecraft.getInstance();
             while (OPEN_MENU != null && OPEN_MENU.consumeClick()) {
                 if (mc.player != null) {
-                    mc.setScreen(new TweakScreen());
+                    openScreen(mc, new TweakScreen());
                 }
             }
         }
