@@ -9,26 +9,25 @@ import com.example.hitboxcam.TweakState;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.player.Player;
 
-/** Подменяет размеры хитбокса (только локальный игрок на клиенте). */
-@Mixin(Player.class)
-public abstract class PlayerMixin {
-    @Inject(method = "getDefaultDimensions", at = @At("RETURN"), cancellable = true, require = 0)
+/**
+ * Подменяет размеры хитбокса и высоту глаз локального игрока (только клиент).
+ * В 26.3 метод getDefaultDimensions объявлен в LivingEntity, а не в Player.
+ */
+@Mixin(LivingEntity.class)
+public abstract class LivingEntityMixin {
+    @Inject(method = "getDefaultDimensions", at = @At("RETURN"), cancellable = true)
     private void hitboxcam$dimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
         try {
             if (!TweakState.hitboxModified()) return;
-            Player self = (Player) (Object) this;
-            if (!self.level().isClientSide()) return;
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != self) return;
-            // меняем только стоячую позу, чтобы приседание/плавание не ломались
-            if (pose != Pose.STANDING) return;
+            if (mc == null || mc.player == null || (Object) this != mc.player) return;
+            if (pose != Pose.STANDING) return; // приседание и плавание остаются ванильными
             cir.setReturnValue(EntityDimensions.scalable(TweakState.width, TweakState.height)
                     .withEyeHeight(TweakState.eyeHeight));
         } catch (Throwable ignored) {
-            // защита от крэша при несовпадении API
         }
     }
 }

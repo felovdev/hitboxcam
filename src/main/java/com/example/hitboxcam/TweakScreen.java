@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -117,16 +118,28 @@ public class TweakScreen extends Screen {
 
         // масштаб: 1 блок = k пикселей, чтобы всё влезало
         float k = Math.min((py1 - py0 - 40) / 6.5f, (px1 - px0 - 20) / 4.5f);
-        k = Math.min(k, 40f);
+        k = Math.max(8f, Math.min(k, 40f));
         int cx = (px0 + px1) / 2;
         int ground = py1 - 20;
 
-        // фигурка игрока (ванильные пропорции, 1.8 x 0.6)
-        int bodyW = Math.round(0.6f * k);
-        int bodyH = Math.round(1.8f * k);
-        g.fill(cx - bodyW / 2, ground - bodyH, cx + bodyW / 2, ground, 0xFFB03030);
-        int headS = Math.round(0.5f * k);
-        g.fill(cx - headS / 2, ground - bodyH, cx + headS / 2, ground - bodyH + headS, 0xFFD06060);
+        // модель игрока (стоит ногами на линии земли; рисуем её ванильного размера)
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            try {
+                double bbH = mc.player.getBoundingBox().maxY - mc.player.getBoundingBox().minY;
+                float yOff = 0.0625f;
+                // в ваниле модель центрируется по bbHeight/2 + yOff, ноги окажутся на ground
+                int centerY = Math.round(ground - (float) ((bbH / 2.0 + yOff) * k));
+                int halfW = Math.round(2.5f * k);
+                int halfH = Math.round(4f * k);
+                InventoryScreen.extractEntityInInventoryFollowsMouse(g, cx - halfW, centerY - halfH,
+                        cx + halfW, centerY + halfH, Math.round(k), yOff, mouseX, mouseY, mc.player);
+            } catch (Throwable ignored) {
+            }
+        }
+
+        // линия земли
+        g.fill(px0 + 4, ground, px1 - 4, ground + 1, 0xFF808080);
 
         // зелёная рамка хитбокса
         int hw = Math.round(TweakState.width * k);
