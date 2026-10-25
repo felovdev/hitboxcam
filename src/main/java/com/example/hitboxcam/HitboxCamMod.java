@@ -1,69 +1,103 @@
 package com.example.hitboxcam;
 
-import com.mojang.blaze3d.platform.InputConstants;
+import java.util.Map;
+import java.util.UUID;
 
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
+import com.example.hitboxcam.net.SettingsToClient;
+import com.example.hitboxcam.net.SettingsToServer;
+
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-@Mod(value = HitboxCamMod.MOD_ID, dist = Dist.CLIENT)
+/**
+ * Общая часть мода (работает и на клиенте, и на сервере): сеть и рассылка настроек всем игрокам.
+ * Если мод стоит и на сервере, размер модели и хитбокс видят все игроки, у которых установлен мод.
+ */
+@Mod(HitboxCamMod.MOD_ID)
 public class HitboxCamMod {
     public static final String MOD_ID = "hitboxcam";
 
-    public static KeyMapping OPEN_MENU;
-
     public HitboxCamMod(IEventBus modBus) {
-        TweakState.load();
-        modBus.addListener(HitboxCamMod::registerKeys);
+        modBus.addListener(HitboxCamMod::registerPayloads);
+        NeoForge.EVENT_BUS.addListener(HitboxCamMod::onPlayerLogin);
+        NeoForge.EVENT_BUS.addListener(HitboxCamMod::onPlayerLogout);
+        NeoForge.EVENT_BUS.addListener(HitboxCamMod::onEntityJoin);
     }
 
-    private static void registerKeys(RegisterKeyMappingsEvent event) {
-        // В 26.3 коды клавиш — SDL-сканкоды, поэтому берём готовую константу
-        OPEN_MENU = new KeyMapping("key.hitboxcam.open", InputConstants.KEY_H, KeyMapping.Category.MISC);
-        event.register(OPEN_MENU);
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        // optional(): ванильные клиенты и серверы без мода по-прежнему могут подключаться
+        PayloadRegistrar registrar = event.registrar("1").optional();
+        registrar.playToServer(SettingsToServer.TYPE, SettingsToServer.CODEC, HitboxCamMod::handleOnServer);
+        registrar.playToClient(SettingsToClient.TYPE, SettingsToClient.CODEC, HitboxCamMod::handleOnClient);
     }
 
-    /** Показывает экран (в 26.3 метод setScreen находится в Minecraft.gui). */
-    public static void openScreen(Minecraft mc, Screen screen) {
-        mc.gui.setScreen(screen);
+    /** Сервер получил настройки игрока: запоминает, применяет и рассылает всем. */
+    private static void handleOnServer(SettingsToServer payload, IPayloadContext ctx) {
+        if (!(ctx.player() instanceof ServerPlayer sp)) return;
+        PlayerTweaks t = payload.tweaks();
+        TweakRegistry.set(sp.getUUID(), t);
+        sp.refreshDimensions();
+        MinecraftServer server = sp.level().getServer();
+        if (server != null) {
+            broadcast(server, sp.getUUID(), t);
+        }
     }
 
-    @EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT)
-    public static class ClientEvents {
-        private static Player lastPlayer;
-        private static int lastSignature = Integer.MIN_VALUE;
+    /** Клиент получил настройки какого-то игрока: запоминает и обновляет его размеры. */
+    private static void handleOnClient(SettingsToClient payload, IPayloadContext ctx) {
+        TweakRegistry.set(payload.player(), payload.tweaks());
+        Player target = ctx.player().level().getPlayerByUUID(payload.player());
+        if (target != null) {
+            target.refreshDimensions();
+        }
+    }
 
-        @SubscribeEvent
-        public static void onTick(ClientTickEvent.Post event) {
-            Minecraft mc = Minecraft.getInstance();
-
-            // Применяем размеры хитбокса при входе в мир, после респавна и при изменении настроек
-            Player p = mc.player;
-            if (p != null) {
-                int sig = Float.hashCode(TweakState.width) * 31 * 31 + Float.hashCode(TweakState.height) * 31
-                        + Float.hashCode(TweakState.eyeHeight);
-                if (p != lastPlayer || sig != lastSignature) {
-                    lastPlayer = p;
-                    lastSignature = sig;
-                    p.refreshDimensions();
-                }
-            } else {
-                lastPlayer = null;
+    private static void broadcast(MinecraftServer server, UUID id, PlayerTweaks t) {
+        SettingsToClient msg = new SettingsToClient(id, t);
+        for (ServerPlayer other : server.getPlayerList().getPlayers()) {
+            try {
+                PacketDistributor.sendToPlayer(other, msg);
+            } catch (Throwable ignored) {
+                // у этого игрока нет мода — пропускаем
             }
+        }
+    }
 
-            while (OPEN_MENU != null && OPEN_MENU.consumeClick()) {
-                if (mc.player != null) {
-                    openScreen(mc, new TweakScreen());
-                }
+    /** Новому игроку отправляем настройки всех, кто уже на сервере. */
+    private static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer joined)) return;
+        for (Map.Entry<UUID, PlayerTweaks> e : TweakRegistry.all().entrySet()) {
+            if (e.getKey().equals(joined.getUUID())) continue;
+            try {
+                PacketDistributor.sendToPlayer(joined, new SettingsToClient(e.getKey(), e.getValue()));
+            } catch (Throwable ignored) {
             }
+        }
+    }
+
+    private static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer left)) return;
+        TweakRegistry.remove(left.getUUID());
+        MinecraftServer server = left.level().getServer();
+        if (server != null) {
+            broadcast(server, left.getUUID(), PlayerTweaks.DEFAULT);
+        }
+    }
+
+    /** Игрок появился в мире (вход, респавн, смена измерения) — сразу применяем его размеры. */
+    private static void onEntityJoin(EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof Player p && TweakRegistry.get(p.getUUID()) != null) {
+            p.refreshDimensions();
         }
     }
 }

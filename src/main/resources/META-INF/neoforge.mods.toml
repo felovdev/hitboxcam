@@ -7,7 +7,7 @@ modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "Hitbox & Camera Tweaker"
 description = '''
-Меняет размер хитбокса игрока и положение камеры. Открыть меню: клавиша H.
+Меняет размер хитбокса, высоту глаз, размер модели игрока и положение камеры. Меню: Esc -> кнопка «Хитбокс и камера» или клавиша H. Если мод стоит и на сервере, размер модели видят все игроки с модом.
 '''
 
 [[mixins]]
@@ -18,11 +18,11 @@ modId = "neoforge"
 type = "required"
 versionRange = "[26.3,)"
 ordering = "NONE"
-side = "CLIENT"
+side = "BOTH"
 
 [[dependencies.${mod_id}]]
 modId = "minecraft"
 type = "required"
 versionRange = "[26.3,26.4)"
 ordering = "NONE"
-side = "CLIENT"
+side = "BOTH"

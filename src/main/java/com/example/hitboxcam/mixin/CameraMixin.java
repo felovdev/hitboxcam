@@ -11,20 +11,16 @@ import com.example.hitboxcam.TweakState;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 
-/**
- * Смещает камеру относительно направления взгляда после стандартного обновления.
- * В 26.3 метод называется update (раньше setup). Работает и от первого лица, и от третьего.
- */
+/** Смещает камеру относительно направления взгляда. Работает и от первого лица, и от третьего. */
 @Mixin(Camera.class)
 public abstract class CameraMixin {
-    // protected void move(float forward, float up, float left)
     @Shadow
     protected abstract void move(float forward, float up, float left);
 
-    @Inject(method = "update", at = @At("TAIL"))
+    @Inject(method = "update", at = @At("TAIL"), require = 0)
     private void hitboxcam$offset(DeltaTracker deltaTracker, CallbackInfo ci) {
         try {
-            if (TweakState.camX == 0f && TweakState.camY == 0f && TweakState.camZ == 0f) return;
+            if (!TweakState.cameraOffset()) return;
             // x: вправо(+) => left = -x
             this.move(TweakState.camZ, TweakState.camY, -TweakState.camX);
         } catch (Throwable ignored) {

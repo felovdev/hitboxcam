@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.example.hitboxcam.HitboxCamMod;
+import com.example.hitboxcam.HitboxCamClient;
 import com.example.hitboxcam.TweakScreen;
 
 import net.minecraft.client.Minecraft;
@@ -26,7 +26,7 @@ public abstract class PauseScreenMixin extends Screen {
         try {
             this.addRenderableWidget(Button.builder(
                     Component.translatable("screen.hitboxcam.open_button"),
-                    b -> HitboxCamMod.openScreen(Minecraft.getInstance(), new TweakScreen((Screen) (Object) this)))
+                    b -> HitboxCamClient.openScreen(Minecraft.getInstance(), new TweakScreen((Screen) (Object) this)))
                     .bounds(8, 8, 140, 20).build());
         } catch (Throwable t) {
             t.printStackTrace();

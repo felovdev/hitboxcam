@@ -1,13 +1,16 @@
 {
   "key.hitboxcam.open": "Open hitbox & camera settings",
   "screen.hitboxcam.title": "Hitbox & Camera",
-  "screen.hitboxcam.hitbox": "Hitbox",
+  "screen.hitboxcam.hitbox": "Hitbox & model",
+  "screen.hitboxcam.legend_hitbox": "Hitbox",
+  "screen.hitboxcam.legend_camera": "Camera",
   "screen.hitboxcam.camera": "Camera",
   "screen.hitboxcam.open_button": "Hitbox & Camera",
   "screen.hitboxcam.reset": "Reset",
   "slider.hitboxcam.width": "Width: %s",
   "slider.hitboxcam.height": "Height: %s",
   "slider.hitboxcam.eye": "Eye height: %s",
+  "slider.hitboxcam.scale": "Model size: %s",
   "slider.hitboxcam.camx": "Camera left/right: %s",
   "slider.hitboxcam.camy": "Camera down/up: %s",
   "slider.hitboxcam.camz": "Camera back/forward: %s"

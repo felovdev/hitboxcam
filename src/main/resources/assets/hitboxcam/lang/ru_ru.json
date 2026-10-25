@@ -1,13 +1,16 @@
 {
   "key.hitboxcam.open": "Открыть настройки хитбокса и камеры",
   "screen.hitboxcam.title": "Хитбокс и камера",
-  "screen.hitboxcam.hitbox": "Хитбокс",
+  "screen.hitboxcam.hitbox": "Хитбокс и модель",
+  "screen.hitboxcam.legend_hitbox": "Хитбокс",
+  "screen.hitboxcam.legend_camera": "Камера",
   "screen.hitboxcam.camera": "Камера",
   "screen.hitboxcam.open_button": "Хитбокс и камера",
   "screen.hitboxcam.reset": "Сброс",
   "slider.hitboxcam.width": "Ширина: %s",
   "slider.hitboxcam.height": "Высота: %s",
   "slider.hitboxcam.eye": "Высота глаз: %s",
+  "slider.hitboxcam.scale": "Размер модели: %s",
   "slider.hitboxcam.camx": "Камера влево/вправо: %s",
   "slider.hitboxcam.camy": "Камера вниз/вверх: %s",
   "slider.hitboxcam.camz": "Камера назад/вперёд: %s"
