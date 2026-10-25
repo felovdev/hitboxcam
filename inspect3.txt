@@ -1,0 +1,26 @@
+=== ClientPacketDistributor
+Compiled from "ClientPacketDistributor.java"
+public final class net.neoforged.neoforge.client.network.ClientPacketDistributor {
+  private net.neoforged.neoforge.client.network.ClientPacketDistributor();
+  public static void sendToServer(net.minecraft.network.protocol.common.custom.CustomPacketPayload, net.minecraft.network.protocol.common.custom.CustomPacketPayload...);
+}
+=== callers of Entity.pick / ProjectileUtil.getEntityHitResult
+--- net.minecraft.client.player.LocalPlayer
+       112: invokevirtual #1669               // Method getEyePosition:(F)Lnet/minecraft/world/phys/Vec3;
+        55: invokevirtual #1710               // Method net/minecraft/world/entity/Entity.getEyePosition:(F)Lnet/minecraft/world/phys/Vec3;
+  private static net.minecraft.world.phys.HitResult pick(net.minecraft.world.entity.Entity, double, double, float);
+        17: invokevirtual #1710               // Method net/minecraft/world/entity/Entity.getEyePosition:(F)Lnet/minecraft/world/phys/Vec3;
+        28: invokevirtual #1737               // Method net/minecraft/world/entity/Entity.pick:(DFZ)Lnet/minecraft/world/phys/HitResult;
+       143: invokestatic  #1755               // Method net/minecraft/world/entity/projectile/ProjectileUtil.getEntityHitResult:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;D)Lnet/minecraft/world/phys/EntityHitResult;
+--- net.minecraft.client.renderer.debug.DebugRenderer
+         9: invokevirtual #258                // Method net/minecraft/world/entity/Entity.getEyePosition:()Lnet/minecraft/world/phys/Vec3;
+        62: invokestatic  #297                // Method net/minecraft/world/entity/projectile/ProjectileUtil.getEntityHitResult:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;D)Lnet/minecraft/world/phys/EntityHitResult;
+=== Minecraft pick/hitResult
+  public net.minecraft.world.entity.Entity crosshairPickEntity;
+  public net.minecraft.world.phys.HitResult hitResult;
+  private void pickBlockOrEntity();
+  private void pick(float);
+=== Camera fields/methods
+  private net.minecraft.world.phys.Vec3 position;
+  public net.minecraft.world.phys.Vec3 position();
+  public boolean isDetached();
