@@ -1,0 +1,68 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Creating Minecraft artifacts without recompilation.
+
+> Task :createMinecraftArtifacts
+Loaded 145 artifacts from /home/runner/work/hitboxcam/hitboxcam/mc-1.21.4/build/tmp/createMinecraftArtifacts/nfrt_artifact_manifest.properties
+[1m*** Started working on [4mdownloadJson[23;0m[23;0m
+  ↓ https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
+  ↓ https://piston-meta.mojang.com/v1/packages/64843a304d7747da779448f853323962233f39ff/1.21.4.json
+ [1m[92m✓[23;0m Completed [4mdownloadJson[23;0m in 0.48s
+[1m*** Started working on [4mdownloadServer[23;0m[23;0m
+[1m*** Started working on [4mdownloadClientMappings[23;0m[23;0m
+[1m*** Started working on [4mdownloadClient[23;0m[23;0m
+  ↓ https://piston-data.mojang.com/v1/objects/0cf2a0b7f056da1a5a5dd99fc6dc752f33987150/client.txt
+  ↓ https://piston-data.mojang.com/v1/objects/4707d00eb834b446575d89a61a11b5d548d8c001/server.jar
+  ↓ https://piston-data.mojang.com/v1/objects/a7e5a6024bfd3cd614625aa05629adf760020304/client.jar
+ [1m[92m✓[23;0m Completed [4mdownloadClientMappings[23;0m in 0.52s
+[1m*** Started working on [4mmergeMappings[23;0m[23;0m
+ ↳ Running external tool net.neoforged.installertools:installertools:2.1.2:fatjar
+ [1m[92m✓[23;0m Completed [4mdownloadClient[23;0m in 0.94s
+[1m*** Started working on [4mstripClient[23;0m[23;0m
+ [1m[92m✓[23;0m Completed [4mdownloadServer[23;0m in 1.27s
+[1m*** Started working on [4mextractServer[23;0m[23;0m
+ ↳ Running external tool net.neoforged.installertools:installertools:2.1.2:fatjar
+ [1m[92m✓[23;0m Completed [4mextractServer[23;0m in 0.74s
+[1m*** Started working on [4mstripServer[23;0m[23;0m
+ [1m[92m✓[23;0m Completed [4mstripServer[23;0m in 2.75s
+ [1m[92m✓[23;0m Completed [4mmergeMappings[23;0m in 4.44s
+ [1m[92m✓[23;0m Completed [4mstripClient[23;0m in 4.02s
+[1m*** Started working on [4mmerge[23;0m[23;0m
+ ↳ Running external tool net.neoforged:mergetool:2.0.3:fatjar
+ [1m[92m✓[23;0m Completed [4mmerge[23;0m in 3.63s
+[1m*** Started working on [4mrename[23;0m[23;0m
+  [33mWARNING: [23;0morg.ow2.asm:asm:9.6 is not present in the artifact manifest
+  ↓ https://libraries.minecraft.net/org/ow2/asm/asm/9.6/asm-9.6.jar
+ ↳ Running external tool net.neoforged:AutoRenamingTool:2.0.5:all
+ [1m[92m✓[23;0m Completed [4mrename[23;0m in 6.79s
+[1m*** Started working on [4mbinaryPatch[23;0m[23;0m
+  [33mWARNING: [23;0mnet.neoforged.installertools:binarypatcher:2.1.2:fatjar is not present in the artifact manifest
+  ↓ https://maven.neoforged.net/releases/net/neoforged/installertools/binarypatcher/2.1.2/binarypatcher-2.1.2-fatjar.jar
+ ↳ Running external tool net.neoforged.installertools:binarypatcher:2.1.2:fatjar
+ [1m[92m✓[23;0m Completed [4mbinaryPatch[23;0m in 5.55s
+[1m*** Started working on [4mcopyUnpatchedClasses[23;0m[23;0m
+ [1m[92m✓[23;0m Completed [4mcopyUnpatchedClasses[23;0m in 1.77s
+[1m*** Started working on [4mapplyDevTransforms[23;0m[23;0m
+ ↳ Running external tool net.neoforged.installertools:installertools:4.0.12:fatjar
+ [1m[92m✓[23;0m Completed [4mapplyDevTransforms[23;0m in 2.34s
+[1m*** Started working on [4mbinaryWithNeoForge[23;0m[23;0m
+ [1m[92m✓[23;0m Completed [4mbinaryWithNeoForge[23;0m in 5.89s
+Performing periodic cache maintenance on /home/runner/.gradle/caches/neoformruntime
+Cleaning intermediate results cache in /home/runner/.gradle/caches/neoformruntime/intermediate_results
+ Maximum age: 744h
+ Maximum cache size: 10 GiB
+ [0;2;3m30 files found[23;0m
+ [0;2;3m306 MiB overall size[23;0m
+ [0;2;3m0 expired keys found[23;0m
+[0;2;3m Deleted 12 outdated lock files
+Total runtime: 32.45s
+
+
+> Task :compileJava
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1793447353990.json
+
+BUILD SUCCESSFUL in 1m 12s
+2 actionable tasks: 2 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.1.0/userguide/configuration_cache_enabling.html
