@@ -1,0 +1,58 @@
+name: inspect
+on:
+  push:
+    branches: ['inspect']
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { dir: '.',         java: '25', name: 'mc263'  }
+          - { dir: 'mc-1.21.4', java: '21', name: 'mc1214' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.1.0'
+      - run: gradle -p ${{ matrix.dir }} compileJava --no-daemon || true
+      - name: Dump
+        run: |
+          mkdir -p out
+          CP=$(find ${{ matrix.dir }} ~/.gradle -name '*.jar' 2>/dev/null | tr '\n' ':')
+          O=out/dump.txt
+          : > $O
+          sig() { echo "=== $1" >> $O; javap -p -cp "$CP" "$1" 2>&1 | grep -v -E 'lambda\$' >> $O; }
+          for c in net.minecraft.client.gui.screens.Screen \
+                   net.minecraft.client.gui.components.events.GuiEventListener \
+                   net.minecraft.client.gui.components.events.AbstractContainerEventHandler \
+                   net.minecraft.client.gui.components.AbstractWidget \
+                   net.minecraft.client.renderer.entity.EntityRenderDispatcher \
+                   net.minecraft.client.input.MouseButtonEvent \
+                   net.minecraft.client.input.MouseButtonInfo \
+                   net.minecraft.client.gui.GuiGraphics net.minecraft.client.gui.GuiGraphicsExtractor \
+                   net.minecraft.client.gui.render.state.pip.GuiEntityRenderState \
+                   net.minecraft.client.renderer.state.gui.pip.GuiEntityRenderState \
+                   net.minecraft.client.renderer.entity.state.EntityRenderState \
+                   net.minecraft.client.renderer.entity.state.LivingEntityRenderState ; do sig $c; done
+          echo "=== InventoryScreen bytecode" >> $O
+          javap -p -c -cp "$CP" net.minecraft.client.gui.screens.inventory.InventoryScreen 2>&1 | awk '/static void (render|extract)Entity|static .*EntityRenderState extractRenderState|static void renderEntityInInventory\(/{f=1} f{print} /^$/{f=0}' >> $O
+      - name: Push result
+        run: |
+          git config user.name "inspect-bot"
+          git config user.email "bot@example.com"
+          git checkout --orphan inspect-out5-${{ matrix.name }}
+          git rm -rf . >/dev/null 2>&1 || true
+          cp out/dump.txt .
+          git add dump.txt
+          git commit -m "dump ${{ matrix.name }}"
+          git push -f origin inspect-out5-${{ matrix.name }}
