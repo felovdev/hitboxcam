@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Тег релиза (например v1.0.1). Оставь пустым, чтобы только собрать.'
+        description: 'Тег релиза (например v1.2.0). Оставь пустым, чтобы только собрать.'
         required: false
         default: ''
 
@@ -16,25 +16,44 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { dir: '.',          java: '25', name: 'mc26.3'  }
+          - { dir: 'mc-1.21.4',  java: '21', name: 'mc1.21.4' }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: ${{ matrix.java }}
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.1.0'
-      - run: gradle build --no-daemon
+      - run: gradle -p ${{ matrix.dir }} build --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: hitboxcam-jar
-          path: build/libs/*.jar
+          name: jar-${{ matrix.name }}
+          path: ${{ matrix.dir }}/build/libs/*.jar
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: jar-*
+          merge-multiple: true
+          path: dist
+      - run: ls -la dist
       - name: Publish release (по тегу)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/*.jar
+          files: dist/*.jar
           generate_release_notes: true
       - name: Publish release (ручной запуск)
         if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
@@ -42,6 +61,6 @@ jobs:
         with:
           tag_name: ${{ inputs.release_tag }}
           target_commitish: ${{ github.sha }}
-          name: Hitbox & Camera Tweaker ${{ inputs.release_tag }}
-          files: build/libs/*.jar
+          name: ${{ inputs.release_tag }}
+          files: dist/*.jar
           generate_release_notes: true

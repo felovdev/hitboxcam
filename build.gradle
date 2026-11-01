@@ -8,7 +8,7 @@ version = mod_version
 group = 'com.example.hitboxcam'
 
 base {
-    archivesName = mod_id
+    archivesName = "${mod_id}-mc26.3"
 }
 
 java {

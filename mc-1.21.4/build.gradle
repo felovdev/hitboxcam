@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.+'
+}
+
+version = mod_version
+group = 'com.example.hitboxcam'
+
+base {
+    archivesName = "${mod_id}-mc1.21.4"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+repositories {
+    mavenCentral()
+}
+
+neoForge {
+    version = neo_version
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+processResources {
+    var props = [mod_id: mod_id, mod_version: mod_version, neo_version: neo_version]
+    inputs.properties props
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand props
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "package": "com.example.hitboxcam.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PlayerMixin"
+  ],
+  "client": [
+    "CameraMixin",
+    "EntityEyeMixin",
+    "GameRendererMixin",
+    "PauseScreenMixin",
+    "PlayerRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

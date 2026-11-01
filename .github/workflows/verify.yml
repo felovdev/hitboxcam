@@ -1,0 +1,40 @@
+name: verify
+on:
+  push:
+    branches: ['port-1214']
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.1.0'
+      - name: Compile
+        run: gradle -p mc-1.21.4 compileJava --no-daemon > compile.log 2>&1 || true
+      - name: Boot dedicated server
+        run: |
+          mkdir -p mc-1.21.4/run
+          echo "eula=true" > mc-1.21.4/run/eula.txt
+          printf "online-mode=false\nlevel-type=flat\nspawn-protection=0\n" > mc-1.21.4/run/server.properties
+          timeout -s INT 200 gradle -p mc-1.21.4 runServer --no-daemon > server.log 2>&1 || true
+      - name: Push logs
+        run: |
+          mkdir -p out
+          cp compile.log server.log out/
+          git config user.name "verify-bot"
+          git config user.email "bot@example.com"
+          git checkout --orphan verify-out2
+          git rm -rf . >/dev/null 2>&1 || true
+          cp out/* .
+          git add compile.log server.log
+          git commit -m "verify 1.21.4 logs"
+          git push -f origin verify-out2
