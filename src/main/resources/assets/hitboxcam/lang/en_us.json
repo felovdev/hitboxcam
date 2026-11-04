@@ -4,6 +4,7 @@
   "screen.hitboxcam.hitbox": "Hitbox & model",
   "screen.hitboxcam.legend_hitbox": "Hitbox",
   "screen.hitboxcam.legend_camera": "Camera",
+  "screen.hitboxcam.hint": "Drag to rotate",
   "screen.hitboxcam.camera": "Camera",
   "screen.hitboxcam.open_button": "Hitbox & Camera",
   "screen.hitboxcam.reset": "Reset",

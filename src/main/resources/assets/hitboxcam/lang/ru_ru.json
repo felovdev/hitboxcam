@@ -4,6 +4,7 @@
   "screen.hitboxcam.hitbox": "Хитбокс и модель",
   "screen.hitboxcam.legend_hitbox": "Хитбокс",
   "screen.hitboxcam.legend_camera": "Камера",
+  "screen.hitboxcam.hint": "Тяни мышью — вращение",
   "screen.hitboxcam.camera": "Камера",
   "screen.hitboxcam.open_button": "Хитбокс и камера",
   "screen.hitboxcam.reset": "Сброс",

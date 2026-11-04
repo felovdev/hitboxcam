@@ -6,27 +6,45 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.joml.Matrix3x2fStack;
+import org.joml.Vector3f;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Pose;
 
 /**
- * Меню по наброску: слева блоки ползунков (хитбокс и модель / камера), снизу кнопки «Сброс» и «Готово»,
- * справа панель с моделью игрока, зелёной рамкой хитбокса и жёлтым квадратом камеры.
+ * Меню: слева ползунки (хитбокс и модель / камера), снизу «Сброс» и «Готово»,
+ * справа 3D-предпросмотр: вращающаяся модель игрока, 3D-рамка хитбокса и камера.
+ * Модель вращается перетаскиванием мышью.
  */
 public class TweakScreen extends Screen {
     private static final int LEFT = 20;
     private static final int SLIDER_W = 190;
     private static final int GAP = 3;
 
+    // положение вида запоминается, пока игра запущена
+    private static float viewYaw = Preview3D.DEFAULT_YAW;
+    private static float viewTilt = Preview3D.DEFAULT_TILT;
+
     private final List<ValueSlider> sliders = new ArrayList<>();
     /** Экран, на который вернуться при закрытии (меню паузы), либо null. */
     private final Screen parent;
+
+    private int px0, py0, px1, py1;
+    private boolean draggingView;
 
     public TweakScreen() {
         this(null);
@@ -74,11 +92,19 @@ public class TweakScreen extends Screen {
         int by = this.height - 28;
         addRenderableWidget(Button.builder(Component.translatable("screen.hitboxcam.reset"), b -> {
             TweakState.reset();
+            viewYaw = Preview3D.DEFAULT_YAW;
+            viewTilt = Preview3D.DEFAULT_TILT;
             HitboxCamClient.markDirty();
             for (ValueSlider s : sliders) s.syncFromState();
         }).bounds(LEFT, by, 90, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
                 .bounds(LEFT + 100, by, 90, 20).build());
+
+        // правая панель предпросмотра
+        px0 = LEFT + SLIDER_W + 20;
+        px1 = this.width - 12;
+        py0 = 12;
+        py1 = this.height - 12;
     }
 
     private int addSlider(int y, int h, String key, float min, float max, Supplier<Float> get, Consumer<Float> set) {
@@ -104,16 +130,49 @@ public class TweakScreen extends Screen {
         return false;
     }
 
+    // ---------- вращение мышью ----------
+
+    private boolean inPanel(double x, double y) {
+        return px1 - px0 >= 40 && x >= px0 && x < px1 && y >= py0 && y < py1;
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (super.mouseClicked(event, doubleClick)) return true;
+        if (event.button() == 0 && inPanel(event.x(), event.y())) {
+            draggingView = true;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (draggingView) {
+            viewYaw += (float) dragX * 0.012f;
+            viewTilt = Preview3D.clampTilt(viewTilt - (float) dragY * 0.008f);
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (draggingView) {
+            draggingView = false;
+            return true;
+        }
+        return super.mouseReleased(event);
+    }
+
+    // ---------- рисование ----------
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(g, mouseX, mouseY, partialTick);
-
-        // правая панель
-        int px0 = LEFT + SLIDER_W + 20;
-        int px1 = this.width - 12;
-        int py0 = 12;
-        int py1 = this.height - 12;
         if (px1 - px0 < 40) return; // окно слишком узкое для предпросмотра
+
+        // фон и рамка панели
         g.fill(px0, py0, px1, py1, 0xC0101010);
         int border = 0xFFB03030;
         g.fill(px0, py0, px1, py0 + 1, border);
@@ -121,67 +180,77 @@ public class TweakScreen extends Screen {
         g.fill(px0, py0, px0 + 1, py1, border);
         g.fill(px1 - 1, py0, px1, py1, border);
 
-        // легенда
-        int green = 0xFF55CC33;
-        int yellow = 0xFFD0A030;
-        g.fill(px0 + 6, py0 + 7, px0 + 12, py0 + 13, green);
+        // легенда и подсказка
+        g.fill(px0 + 6, py0 + 7, px0 + 12, py0 + 13, Preview3D.color(Preview3D.HITBOX, false));
         g.text(this.font, Component.translatable("screen.hitboxcam.legend_hitbox"), px0 + 16, py0 + 6, 0xFFFFFFFF);
-        g.fill(px0 + 6, py0 + 19, px0 + 12, py0 + 25, yellow);
+        g.fill(px0 + 6, py0 + 19, px0 + 12, py0 + 25, Preview3D.color(Preview3D.CAMERA, false));
         g.text(this.font, Component.translatable("screen.hitboxcam.legend_camera"), px0 + 16, py0 + 18, 0xFFFFFFFF);
+        g.text(this.font, Component.translatable("screen.hitboxcam.hint"), px0 + 6, py1 - 13, 0xFFA0A0A0);
 
-        // автомасштаб: всё, что нарисовано (модель, рамка, камера), должно помещаться в панель
-        float camEyeY = TweakState.eyeHeight + TweakState.camY;
-        float topY = Math.max(Math.max(TweakState.height, camEyeY), 1.8f * TweakState.modelScale);
-        float botY = Math.min(0f, camEyeY);
-        float halfW = Math.max(Math.max(TweakState.width, 0.6f * TweakState.modelScale) / 2f,
-                Math.abs(TweakState.camX)) + 0.3f;
-        float availH = (py1 - py0) - 34 - 14;
-        float availW = (px1 - px0) - 16;
-        float k = Math.min(availH / (topY - botY + 0.2f), availW / (2f * halfW));
-        k = Math.max(6f, Math.min(k, 60f));
-
+        float innerTop = py0 + 32;
+        float innerBottom = py1 - 18;
+        float k = Preview3D.fit(px1 - px0 - 16, innerBottom - innerTop, viewTilt);
         int cx = (px0 + px1) / 2;
-        int ground = py1 - 12 + Math.round(botY * k);
+        float ground = innerBottom - Preview3D.below(viewTilt) * k;
 
-        // модель игрока (ногами на линии земли, размер зависит от ползунка «Размер модели»)
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            try {
-                float yOff = 0.0625f;
-                float bbH = mc.player.getBbHeight();
-                int centerY = Math.round(ground - (bbH / 2f + yOff) * k);
-                int halfWpx = Math.round(2.5f * k);
-                int halfHpx = Math.round(4f * k);
-                InventoryScreen.extractEntityInInventoryFollowsMouse(g, cx - halfWpx, centerY - halfHpx,
-                        cx + halfWpx, centerY + halfHpx, Math.round(k), yOff, mouseX, mouseY, mc.player);
-            } catch (Throwable ignored) {
-            }
+        List<Preview3D.Line> lines = Preview3D.lines(cx, ground, k, viewYaw, viewTilt);
+
+        // 1) сетка земли, 2) модель игрока, 3) хитбокс и камера поверх модели
+        for (Preview3D.Line l : lines) {
+            if (l.kind() == Preview3D.GROUND) drawLine(g, l);
         }
+        drawModel(g, cx, ground, k);
+        for (Preview3D.Line l : lines) {
+            if (l.kind() != Preview3D.GROUND) drawLine(g, l);
+        }
+    }
 
-        // линия земли
-        g.fill(px0 + 4, ground, px1 - 4, ground + 1, 0xFF808080);
+    /** Рисует модель игрока с нашим поворотом (вместо ванильного «следования за мышью»). */
+    private void drawModel(GuiGraphicsExtractor g, int cx, float ground, float k) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return;
+        try {
+            EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+            @SuppressWarnings("unchecked")
+            EntityRenderer<Entity, EntityRenderState> renderer =
+                    (EntityRenderer<Entity, EntityRenderState>) (EntityRenderer<?, ?>) dispatcher.getRenderer((Entity) player);
+            EntityRenderState state = renderer.createRenderState(player, 1.0f);
+            state.shadowPieces.clear();
+            state.outlineColor = 0;
+            if (state instanceof LivingEntityRenderState living) {
+                living.bodyRot = 180f; // лицом к зрителю
+                living.yRot = 0f;
+                if (living.pose != Pose.FALL_FLYING) living.xRot = 0f;
+            }
 
-        // зелёная рамка хитбокса
-        int hw = Math.max(2, Math.round(TweakState.width * k));
-        int hh = Math.max(2, Math.round(TweakState.height * k));
-        int gx0 = cx - hw / 2;
-        int gy0 = ground - hh;
-        int gx1 = gx0 + hw;
-        g.fill(gx0, gy0, gx1, gy0 + 1, green);
-        g.fill(gx0, ground - 1, gx1, ground, green);
-        g.fill(gx0, gy0, gx0 + 1, ground, green);
-        g.fill(gx1 - 1, gy0, gx1, ground, green);
+            Vector3f translation = new Vector3f(0f, player.getBbHeight() / 2f + 0.0625f, 0f);
+            // ноги окажутся на линии земли: центр области = ground - k * translation.y
+            int anchorY = Math.round(ground - k * translation.y);
+            int hw = (px1 - px0) / 2;
+            int hh = Math.max(anchorY - py0, py1 - anchorY) + 4;
 
-        // жёлтый квадрат = камера: уровень глаз + смещение
-        int camPxX = cx + Math.round(TweakState.camX * k);
-        int camPxY = ground - Math.round(camEyeY * k);
-        int s = 5;
-        g.fill(camPxX - s, camPxY - s, camPxX + s, camPxY - s + 1, yellow);
-        g.fill(camPxX - s, camPxY + s - 1, camPxX + s, camPxY + s, yellow);
-        g.fill(camPxX - s, camPxY - s, camPxX - s + 1, camPxY + s, yellow);
-        g.fill(camPxX + s - 1, camPxY - s, camPxX + s, camPxY + s, yellow);
-        // «хвостик» направления взгляда
-        g.fill(camPxX, camPxY, camPxX + 14, camPxY + 1, yellow);
+            g.enableScissor(px0 + 1, py0 + 1, px1 - 1, py1 - 1);
+            g.entity(state, k, translation, Preview3D.pose(viewYaw, viewTilt),
+                    Preview3D.cameraOrientation(viewTilt), cx - hw, anchorY - hh, cx + hw, anchorY + hh);
+            g.disableScissor();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Линия толщиной в один пиксель GUI: повёрнутый тонкий прямоугольник. */
+    private static void drawLine(GuiGraphicsExtractor g, Preview3D.Line l) {
+        float dx = l.x1() - l.x0();
+        float dy = l.y1() - l.y0();
+        int len = Math.round((float) Math.hypot(dx, dy));
+        if (len < 1) return;
+        float angle = (float) Math.atan2(dy, dx);
+        Matrix3x2fStack pose = g.pose();
+        pose.pushMatrix();
+        pose.translate(l.x0(), l.y0());
+        pose.rotate(angle);
+        pose.translate(0f, -0.5f);
+        g.fill(0, 0, len, 1, Preview3D.color(l.kind(), l.back()));
+        pose.popMatrix();
     }
 
     /** Ползунок со значением; в тексте показывает текущее число. */
