@@ -14,5 +14,6 @@
   "slider.hitboxcam.scale": "Размер модели: %s",
   "slider.hitboxcam.camx": "Камера влево/вправо: %s",
   "slider.hitboxcam.camy": "Камера вниз/вверх: %s",
-  "slider.hitboxcam.camz": "Камера назад/вперёд: %s"
+  "slider.hitboxcam.camz": "Камера назад/вперёд: %s",
+  "slider.hitboxcam.length": "Длина: %s"
 }

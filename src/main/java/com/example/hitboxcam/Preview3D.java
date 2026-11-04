@@ -53,18 +53,18 @@ public final class Preview3D {
     // ---------- размеры сцены (не зависят от угла поворота, чтобы масштаб не «прыгал») ----------
 
     public static float radius() {
-        float r = Math.max(0.71f * TweakState.width, 0.45f * TweakState.modelScale);
-        r = Math.max(r, (float) Math.hypot(TweakState.camX, TweakState.camZ) + 0.5f);
+        float r = Math.max(0.71f * Math.max(TweakState.width, TweakState.length), 0.45f * TweakState.modelScale);
+        r = Math.max(r, (float) Math.hypot(TweakState.camX, TweakState.camZ) * TweakState.modelScale + 0.5f);
         return Math.max(r, 0.8f);
     }
 
     private static float top() {
-        return Math.max(Math.max(TweakState.height, TweakState.eyeHeight + TweakState.camY + 0.5f),
+        return Math.max(Math.max(TweakState.height, TweakState.eyeHeight + TweakState.camY * TweakState.modelScale + 0.5f),
                 1.8f * TweakState.modelScale);
     }
 
     private static float bottom() {
-        return Math.min(0f, TweakState.eyeHeight + TweakState.camY - 0.5f);
+        return Math.min(0f, TweakState.eyeHeight + TweakState.camY * TweakState.modelScale - 0.5f);
     }
 
     /** Сколько пикселей на блок, чтобы всё поместилось в область availW x availH. */
@@ -100,7 +100,8 @@ public final class Preview3D {
         // хитбокс
         float w = TweakState.width;
         float h = TweakState.height;
-        box(out, ent, cx, ground, k, HITBOX, 0, h / 2f, 0, w / 2f, h / 2f, w / 2f);
+        float len = TweakState.length;
+        box(out, ent, cx, ground, k, HITBOX, 0, h / 2f, 0, w / 2f, h / 2f, len / 2f);
 
         // метка глаз
         float eye = TweakState.eyeHeight;
@@ -110,10 +111,11 @@ public final class Preview3D {
         seg(out, ent, cx, ground, k, EYE, Float.NaN, 0, eye, -m, 0, eye, m);
 
         // камера: корпус + «объектив» (пирамида вперёд, в сторону -Z)
-        float camX = TweakState.camX;
-        float camY = eye + TweakState.camY;
-        float camZ = -TweakState.camZ;
-        float u = Math.max(0.16f, 6f / k);
+        float ms = TweakState.modelScale;
+        float camX = TweakState.camX * ms;
+        float camY = eye + TweakState.camY * ms;
+        float camZ = -TweakState.camZ * ms;
+        float u = Math.max(0.16f * ms, 6f / k);
         box(out, ent, cx, ground, k, CAMERA, camX, camY, camZ, u, 0.7f * u, 0.8f * u);
         float zc = proj(ent, cx, ground, k, camX, camY, camZ)[2];
         float z0 = camZ - 0.8f * u;

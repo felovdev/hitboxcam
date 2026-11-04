@@ -12,6 +12,7 @@ public final class TweakState {
     public static final float CAM_RANGE = 5.0f; // камера: -5..+5 блоков по каждой оси
 
     public static float width = PlayerTweaks.DEF_WIDTH;
+    public static float length = PlayerTweaks.DEF_LENGTH;
     public static float height = PlayerTweaks.DEF_HEIGHT;
     public static float eyeHeight = PlayerTweaks.DEF_EYE;
     public static float modelScale = PlayerTweaks.DEF_SCALE;
@@ -27,7 +28,7 @@ public final class TweakState {
     private TweakState() {}
 
     public static PlayerTweaks toTweaks() {
-        return PlayerTweaks.clamped(width, height, eyeHeight, modelScale);
+        return PlayerTweaks.clamped(width, height, eyeHeight, modelScale, length);
     }
 
     public static boolean cameraOffset() {
@@ -36,6 +37,7 @@ public final class TweakState {
 
     public static void reset() {
         width = PlayerTweaks.DEF_WIDTH;
+        length = PlayerTweaks.DEF_LENGTH;
         height = PlayerTweaks.DEF_HEIGHT;
         eyeHeight = PlayerTweaks.DEF_EYE;
         modelScale = PlayerTweaks.DEF_SCALE;
@@ -51,6 +53,7 @@ public final class TweakState {
     public static void save() {
         Properties p = new Properties();
         p.setProperty("width", Float.toString(width));
+        p.setProperty("length", Float.toString(length));
         p.setProperty("height", Float.toString(height));
         p.setProperty("eye", Float.toString(eyeHeight));
         p.setProperty("scale", Float.toString(modelScale));
@@ -73,8 +76,10 @@ public final class TweakState {
                     Float.parseFloat(p.getProperty("width", "" + PlayerTweaks.DEF_WIDTH)),
                     Float.parseFloat(p.getProperty("height", "" + PlayerTweaks.DEF_HEIGHT)),
                     Float.parseFloat(p.getProperty("eye", "" + PlayerTweaks.DEF_EYE)),
-                    Float.parseFloat(p.getProperty("scale", "" + PlayerTweaks.DEF_SCALE)));
+                    Float.parseFloat(p.getProperty("scale", "" + PlayerTweaks.DEF_SCALE)),
+                    Float.parseFloat(p.getProperty("length", "" + PlayerTweaks.DEF_LENGTH)));
             width = t.width();
+            length = t.length();
             height = t.height();
             eyeHeight = t.eye();
             modelScale = t.scale();

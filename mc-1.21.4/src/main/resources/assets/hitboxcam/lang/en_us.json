@@ -14,5 +14,6 @@
   "slider.hitboxcam.scale": "Model size: %s",
   "slider.hitboxcam.camx": "Camera left/right: %s",
   "slider.hitboxcam.camy": "Camera down/up: %s",
-  "slider.hitboxcam.camz": "Camera back/forward: %s"
+  "slider.hitboxcam.camz": "Camera back/forward: %s",
+  "slider.hitboxcam.length": "Length: %s"
 }

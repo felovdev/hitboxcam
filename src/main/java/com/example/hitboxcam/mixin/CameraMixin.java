@@ -22,7 +22,8 @@ public abstract class CameraMixin {
         try {
             if (!TweakState.cameraOffset()) return;
             // x: вправо(+) => left = -x
-            this.move(TweakState.camZ, TweakState.camY, -TweakState.camX);
+            float s = TweakState.modelScale;
+            this.move(TweakState.camZ * s, TweakState.camY * s, -TweakState.camX * s);
         } catch (Throwable ignored) {
         }
     }

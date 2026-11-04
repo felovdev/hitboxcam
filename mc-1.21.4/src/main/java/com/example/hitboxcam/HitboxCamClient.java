@@ -34,6 +34,7 @@ public class HitboxCamClient {
         modBus.addListener(HitboxCamClient::registerKeys);
         NeoForge.EVENT_BUS.addListener(HitboxCamClient::onTick);
         NeoForge.EVENT_BUS.addListener(HitboxCamClient::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener(CameraDebugRender::onRender);
     }
 
     private static void registerKeys(RegisterKeyMappingsEvent event) {

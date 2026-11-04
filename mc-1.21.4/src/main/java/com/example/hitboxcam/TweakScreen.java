@@ -56,7 +56,7 @@ public class TweakScreen extends Screen {
         sliders.clear();
 
         // Вёрстка подстраивается под высоту окна: 7 ползунков + 2 заголовка + кнопки
-        int rows = 7;
+        int rows = 8;
         int headers = 2 * 16;
         int free = this.height - 16 - headers - 10 - 34;
         int sliderH = Math.max(12, Math.min(20, free / rows - GAP));
@@ -67,6 +67,8 @@ public class TweakScreen extends Screen {
         y += 16;
         y = addSlider(y, sliderH, "width", PlayerTweaks.MIN_WIDTH, PlayerTweaks.MAX_WIDTH,
                 () -> TweakState.width, v -> TweakState.width = v);
+        y = addSlider(y, sliderH, "length", PlayerTweaks.MIN_LENGTH, PlayerTweaks.MAX_LENGTH,
+                () -> TweakState.length, v -> TweakState.length = v);
         y = addSlider(y, sliderH, "height", PlayerTweaks.MIN_HEIGHT, PlayerTweaks.MAX_HEIGHT,
                 () -> TweakState.height, v -> TweakState.height = v);
         y = addSlider(y, sliderH, "eye", PlayerTweaks.MIN_EYE, PlayerTweaks.MAX_EYE,
